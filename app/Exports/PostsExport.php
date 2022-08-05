@@ -2,31 +2,26 @@
 
 namespace App\Exports;
 
-use App\Models\User;
+use App\Models\Post;
 use Maatwebsite\Excel\Concerns\FromCollection;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 
-class UsersExport implements FromCollection,WithHeadings
+class PostsExport implements FromCollection,WithHeadings
 {
     /**
     * @return \Illuminate\Support\Collection
     */
     public function collection()
     {
-        return User::all();
+        return Post::all();
     }
     public function headings(): array
     {
         return [
             'Id',
-            'Name',
-            'Email',
-            'Image',
-            'Type',
-            'Phone',
-            'address',
-            'dob',
-            'email_verifed_at',
+            'Title',
+            'Description',
+            'User_id',
             'Created_at',
             'Updated_at'
         ];

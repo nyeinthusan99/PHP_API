@@ -14,6 +14,8 @@ class ForgetPasswordController extends Controller
 {
     protected function sendResetLinkResponse(Request $request)
         {
+
+            //send link to mail
             $input = $request->only('email');
 
             $validator = Validator::make($input, [
@@ -21,7 +23,6 @@ class ForgetPasswordController extends Controller
             ]);
 
             if ($validator->fails()) {
-              //return response(['errors'=>$validator->errors()->all()], 422);
               return response()->json([
                 'success' => false,
                 'message' => 'Wrong',

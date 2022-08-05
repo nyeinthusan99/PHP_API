@@ -1,22 +1,27 @@
 <?php
 
 namespace App\Http\Controllers\Api;
-use Validator;
+use Illuminate\Support\Facades\Validator;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Laravel\Passport\TokenRepository;
-use Laravel\Passport\RefreshTokenRepository;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Carbon\Carbon;
 class PassportAuthController extends Controller
 {
+    //register
+
      public function register(Request $request)
      {
-       $input = $request->only(['name', 'email', 'password']);
+       $input = $request->all();
 
         $validate_data = [
-            'name' => 'required|string|min:4',
+            'name' => 'required|string',
             'email' => 'required|email',
             'password' => 'required|min:8',
+            'phone' => 'required|numeric|min:11',
         ];
 
         $validator = Validator::make($input, $validate_data);
@@ -26,19 +31,32 @@ class PassportAuthController extends Controller
                 'success' => false,
                 'message' => 'Validation Error!',
                 'errors' => $validator->errors()
-            ]);
+            ],400);
         }
+        if($request->hasFile('image')){
+            $file = $request->file('image');
+            $file_name = uniqid(time()).$file->getClientOriginalName();
+            Storage::disk('public')->put($file_name, File::get($file));
+            $filePath   = 'storage/' . $file_name;
+        }else {
+            $filePath = "";
+          }
 
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
-            'password' => bcrypt($request->password)
+            'password' => bcrypt($request->password),
+            'image' => $filePath,
+            'type' => $input['type'],
+            'phone' =>$input['phone'],
+            'address' => $input['address'],
+            'dob' =>$input['dob'],
         ]);
+             return response()->json([
+                'success' => true,
+                'message' => 'User register succesfully, Use token to authenticate.',
+            ], 200);
 
-        return response()->json([
-            'success' => true,
-            'message' => 'User registered succesfully, Use Login method to receive token.'
-        ], 200);
     }
 
     //login
@@ -59,7 +77,7 @@ class PassportAuthController extends Controller
                 'success' => false,
                 'message' => 'Wrong',
                 'errors' => $validator->errors()
-            ]);
+            ],400);
         }
 
         if (auth()->attempt($input)) {
@@ -73,29 +91,160 @@ class PassportAuthController extends Controller
         } else {
             return response()->json([
                 'success' => false,
-                'message' => 'User authentication failed.'
+                'error' => 'User authentication failed.'
             ], 401);
         }
     }
 
-    public function userInfo()
+    //get user information
+    public function userInfo(Request $request)
     {
-        $user = auth()->user();
+        $user = $request->user();
         return response()->json(['user'=>$user],200);
     }
 
     //logout
 
-    public function logout()
+    public function logout(Request $request)
     {
-        $access_token = auth()->user()->token();
-
-        $tokenRepository = app(TokenRepository::class);
-        $tokenRepository->revokeAccessToken($access_token->id);
+        $access_token = $request->user()->token()->revoke();
 
         return response()->json([
             'success' => true,
             'message' => 'User logout successfully.'
         ], 200);
     }
+
+    //update
+
+    public function updateUser(Request $request,$id)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+           'name' => 'required',
+           'email' => 'required|email',
+           'type' => 'required',
+           'phone' => 'required|numeric|min:11',
+        ]);
+        if($validator->fails()){
+            return response()->json([
+                'success' => false,
+                'message' => 'Wrong',
+                'errors' => $validator->errors()
+            ],401);
+        }
+        $user = User::find($id);
+        if($request->hasFile('image')){
+            $file = $request->file('image');
+            $file_name = uniqid(time()).$file->getClientOriginalName();
+            Storage::disk('public')->put($file_name, File::get($file));
+            $filePath   = 'storage/' . $file_name;
+        }else{
+            $filePath= $user->image;
+        }
+
+        $user->name = $input['name'];
+        $user->email = $input['email'];
+        $user->image = $filePath;
+        $user->type = $input['type'];
+        $user->phone = $input['phone'];
+        $user->address = $input['address'];
+        $user->dob = $input['dob'];
+        $user->save();
+        return response()->json([
+        "success" => true,
+        "message" => "User updated successfully.",
+        "data" => $user
+        ],200);
+    }
+
+    //delete
+
+    public function destroy(User $user)
+    {
+        $user->delete();
+        return response()->json([
+        "success" => true,
+        "message" => "Post deleted successfully.",
+        "data" => $user
+        ]);
+    }
+
+    //list & search
+
+    public function userLists(Request $request)
+    {
+        if($request->user()->type == 1){
+            return User::where('type',1)->when(request('search'),function($query){
+                $query->where('title', 'LIKE', '%'.request('search').'%');
+            })->paginate(3);
+        }else{
+            return User::when(request('search'),function($query){
+                $query->where('name', 'LIKE', '%'.request('search').'%');
+            })->paginate(3);
+        }
+
+    }
+
+    public function store(Request $request)
+    {
+        $input = $request->all();
+        $validator = Validator::make($input, [
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'password' => 'required|min:8',
+            'phone' => 'required|numeric|min:11',
+            'type'=>'required'
+        ]);
+        if($validator->fails()){
+            return response()->json([
+                'success' => false,
+                'message' => 'Validation Error!',
+                'errors' => $validator->errors()
+            ],400);
+        }
+
+        if($request->hasFile('image')){
+            $file = $request->file('image');
+            $file_name = uniqid(time()).$file->getClientOriginalName();
+            Storage::disk('public')->put($file_name, File::get($file));
+            $filePath   = 'storage/' . $file_name;
+        }else {
+            $filePath = "";
+          }
+        $user = User::create([
+            'name' => $input['name'],
+            'email' => $input['email'],
+            'password' => bcrypt($request->password),
+            'image' => $filePath,
+            'type' => $input['type'],
+            'phone' =>$input['phone'],
+            'address' => $input['address'],
+            'dob' =>$input['dob'],
+        ]);
+             return response()->json([
+                'success' => true,
+                "message" => "User created successfully.",
+                "data" => $user
+            ], 200);
+    }
+
+    public function show($id)
+    {
+        $user = User::find($id);
+        if (is_null($user)) {
+        return response()->json([
+            "success" => false,
+            "message" => "User not found."
+            ]);
+        }
+        return response()->json([
+        "success" => true,
+        "message" => "User retrieved successfully.",
+        "data" => $user
+        ]);
+    }
 }
+
+
+

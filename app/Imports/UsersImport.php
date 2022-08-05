@@ -6,24 +6,10 @@ use App\Models\User;
 use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\ToCollection;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
-use Maatwebsite\Excel\Concerns\WithStartRow;
 use Illuminate\Support\Facades\Validator;
 
-class UsersImport implements ToCollection, WithHeadingRow ,WithStartRow
+class UsersImport implements ToCollection, WithHeadingRow
 {
-    public function headingRow(): int
-    {
-        return 0;
-    }
-
-    /**
-     * @return int
-     */
-    public function startRow(): int
-    {
-        return 1;
-    }
-    
     public function collection(Collection $rows)
     {
          Validator::make($rows->toArray(), [
@@ -37,6 +23,11 @@ class UsersImport implements ToCollection, WithHeadingRow ,WithStartRow
                 'name' => $row['name'],
                 'email' => $row['email'],
                 'password' => bcrypt($row['password']),
+                'image' => '',
+                'type' => $row['type'],
+                'phone' =>$row['phone'],
+                'address' => $row['address'],
+                'dob' =>$row['dob'],
             ]);
         }
     }

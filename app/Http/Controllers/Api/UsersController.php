@@ -6,10 +6,15 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Exports\UsersExport;
 use App\Imports\UsersImport;
-use Validator;
+use App\Models\User;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Validator;
 
 class UsersController extends Controller
 {
+
+    //import
     public function import(Request $request)
     {
 
@@ -26,18 +31,34 @@ class UsersController extends Controller
                 'success' => false,
                 'message' => 'Validation Error!',
                 'errors' => $validator->errors()
-            ]);
+            ],400);
         }
         Excel::import(new UsersImport, $request->file('file'));
         return response()->json([
         'result' => 1,
         'message' => 'Import successfully'
-       ]);
+       ],200);
     }
+
+    //export
     public function export()
     {
         return Excel::download(new UsersExport, 'users.xlsx');
     }
+
+
+    public function searchUser($name)
+    {
+        $result = User::where('name', 'LIKE', '%'. $name. '%')->get();
+        if(count($result)){
+         return Response()->json($result);
+        }
+        else
+        {
+        return response()->json(['Result' => 'No Data not found'], 404);
+      }
+    }
+
 }
 
 

@@ -12,6 +12,8 @@ use Illuminate\Auth\Events\PasswordReset;
 
 class ResetPasswordController extends Controller
 {
+
+    //reset password
     protected function sendResetResponse(Request $request)
     {
         $input = $request->only('email','token', 'password', 'password_confirmation');

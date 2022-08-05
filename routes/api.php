@@ -3,10 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\PassportAuthController;
-use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ForgetPasswordController;
 use App\Http\Controllers\Api\ResetPasswordController;
-use App\Http\Controllers\Api\SendEmailController;
 use App\Http\Controllers\Api\UsersController;
 
 /*
@@ -27,13 +26,22 @@ Route::post('password/reset', [ResetPasswordController::class, 'sendResetRespons
 
 Route::post('users/import',[UsersController::class,'import']);
 Route::get('users/export', [UsersController::class, 'export']);
+Route::post('posts/import',[PostController::class,'import']);
+Route::get('posts/export', [PostController::class, 'export']);
+
 
 Route::middleware('auth:api')->group(function () {
-Route::get('getUser', [PassportAuthController::class, 'userInfo']);
-Route::post('logout', [PassportAuthController::class, 'logout']);
-Route::resource('products', ProductController::class);
-Route::get('products/search/{keyword}', [ProductController::class,'search']);
+    Route::get('getUser', [PassportAuthController::class, 'userInfo']);
+    Route::get('userLists', [PassportAuthController::class, 'userLists']);
+    Route::post('logout', [PassportAuthController::class, 'logout']);
+    Route::resource('posts', PostController::class);
+    Route::resource('users',PassportAuthController::class);
+    Route::post('updateUser/{id}',[PassportAuthController::class,'updateUser']);
 });
+
+//Route::middleware('admin')->group(function(){
+//    Route::get('getUser', [PassportAuthController::class, 'userInfo']);
+//});
 
 
 
