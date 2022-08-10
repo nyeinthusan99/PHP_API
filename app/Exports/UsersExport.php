@@ -13,22 +13,26 @@ class UsersExport implements FromCollection,WithHeadings
     */
     public function collection()
     {
-        return User::all();
+        $user = User::select('name','email','type','phone','address','dob')->get();
+        for($i=0;$i<count($user);$i++){
+            \Log::info($user[$i]);
+        if($user[$i]->type == 0){
+            $user[$i]->type = 'Admin';
+        }else{
+            $user[$i]->type = 'User';
+        }
+        }
+        return $user;
     }
     public function headings(): array
     {
         return [
-            'Id',
             'Name',
             'Email',
-            'Image',
             'Type',
             'Phone',
             'address',
             'dob',
-            'email_verifed_at',
-            'Created_at',
-            'Updated_at'
         ];
     }
 }

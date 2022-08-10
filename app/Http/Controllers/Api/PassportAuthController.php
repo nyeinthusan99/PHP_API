@@ -9,6 +9,9 @@ use Laravel\Passport\TokenRepository;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\File;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Validation\Rule;
+
 class PassportAuthController extends Controller
 {
     //register
@@ -19,7 +22,7 @@ class PassportAuthController extends Controller
 
         $validate_data = [
             'name' => 'required|string',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
             'phone' => 'required|numeric|min:11',
         ];
@@ -101,6 +104,7 @@ class PassportAuthController extends Controller
     {
         $user = $request->user();
         return response()->json(['user'=>$user],200);
+
     }
 
     //logout
@@ -117,12 +121,12 @@ class PassportAuthController extends Controller
 
     //update
 
-    public function updateUser(Request $request,$id)
+    public function updateUser(Request $request,$id,User $user)
     {
         $input = $request->all();
         $validator = Validator::make($input, [
            'name' => 'required',
-           'email' => 'required|email',
+           'email' => [Rule::unique("users","email")->ignore($id),'required'],
            'type' => 'required',
            'phone' => 'required|numeric|min:11',
         ]);
@@ -174,24 +178,39 @@ class PassportAuthController extends Controller
 
     public function userLists(Request $request)
     {
-        if($request->user()->type == 1){
-            return User::where('type',1)->when(request('search'),function($query){
-                $query->where('title', 'LIKE', '%'.request('search').'%');
-            })->paginate(3);
-        }else{
-            return User::when(request('search'),function($query){
-                $query->where('name', 'LIKE', '%'.request('search').'%');
-            })->paginate(3);
-        }
-
+            $user = User::all();
+            // if($request->name){
+            //     $user->where('name','LIKE','%'.$request->name.'%');
+            // }
+            // if($request->email){
+            //     $user->where('email','LIKE','%'.$request->email.'%');
+            // }
+            // if($request->$user->type){
+            //     $user->where('type',$request->$user->type);
+            // }
+            // return $user->orderBy('id','DESC')->paginate(3);
+            return $user;
+            // return User::when(request('search'),function($query){
+            //     $query->where('name', 'LIKE', '%'.request('search').'%')->orwhere('email', 'LIKE', '%'.request('search').'%')->orwhere('type',$request->search);
+            // })->orderBy('id', 'DESC')->paginate(3);
     }
+    // public function emailSearch(Request $request)
+    // {
+    //         return User::when(request('search'),function($query){
+    //             $query->where('email', 'LIKE', '%'.request('search').'%');
+    //         })->orderBy('id', 'DESC')->paginate(3);
+    // }
+    // public function typeSearch(Request $request)
+    // {
+    //     return User::where('type',$request->search)->orderBy('id','DESC')->paginate(3);
+    // }
 
     public function store(Request $request)
     {
         $input = $request->all();
         $validator = Validator::make($input, [
             'name' => 'required|string',
-            'email' => 'required|email',
+            'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
             'phone' => 'required|numeric|min:11',
             'type'=>'required'
@@ -221,6 +240,7 @@ class PassportAuthController extends Controller
             'phone' =>$input['phone'],
             'address' => $input['address'],
             'dob' =>$input['dob'],
+
         ]);
              return response()->json([
                 'success' => true,
@@ -232,6 +252,7 @@ class PassportAuthController extends Controller
     public function show($id)
     {
         $user = User::find($id);
+
         if (is_null($user)) {
         return response()->json([
             "success" => false,

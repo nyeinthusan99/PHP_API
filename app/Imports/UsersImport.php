@@ -10,12 +10,15 @@ use Illuminate\Support\Facades\Validator;
 
 class UsersImport implements ToCollection, WithHeadingRow
 {
+    
+
     public function collection(Collection $rows)
     {
          Validator::make($rows->toArray(), [
              '*.name' => 'required',
              '*.email' => 'required|email|unique:users',
              '*.password' => 'required|min:8',
+             '*.phone' => 'required|min:11|numeric'
          ])->validate();
 
          foreach ($rows as $row) {

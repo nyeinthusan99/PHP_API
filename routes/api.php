@@ -26,17 +26,20 @@ Route::post('password/reset', [ResetPasswordController::class, 'sendResetRespons
 
 Route::post('users/import',[UsersController::class,'import']);
 Route::get('users/export', [UsersController::class, 'export']);
-Route::post('posts/import',[PostController::class,'import']);
-Route::get('posts/export', [PostController::class, 'export']);
-
+Route::get('posts/export/{id}', [PostController::class, 'export']);
 
 Route::middleware('auth:api')->group(function () {
     Route::get('getUser', [PassportAuthController::class, 'userInfo']);
     Route::get('userLists', [PassportAuthController::class, 'userLists']);
+    // Route::get('emailSearch', [PassportAuthController::class, 'emailSearch']);
+    // Route::get('typeSearch', [PassportAuthController::class, 'typeSearch']);
     Route::post('logout', [PassportAuthController::class, 'logout']);
     Route::resource('posts', PostController::class);
+    // Route::put('postUpdate/{id}',[PostController::class,'updatePost']);
+    // Route::get('descSearch', [PostController::class, 'descSearch']);
     Route::resource('users',PassportAuthController::class);
     Route::post('updateUser/{id}',[PassportAuthController::class,'updateUser']);
+    Route::post('posts/import',[PostController::class,'import']);
 });
 
 //Route::middleware('admin')->group(function(){

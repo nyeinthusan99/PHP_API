@@ -5,34 +5,55 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\Post;
+use App\Models\User;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Exports\PostsExport;
 use App\Imports\PostsImport;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 class PostController extends Controller
 {
 
     //to get post list & search
     public function index(Request $request)
     {
-        if($request->user()->type == 0){
-            return Post::when(request('search'),function($query){
-                $query->where('title', 'LIKE', '%'.request('search').'%');
-            })->paginate(5);
-        }else{
-            return Post::where('user_id',"=",$request->user()->id)->when(request('search'),function($query){
-                $query->where('title', 'LIKE', '%'.request('search').'%');
-            })->paginate(5);
-        }
-    }
+        \Log::info($request);
+         $post = Post::where('title', 'LIKE', '%'. $request['title'] .'%')
+                ->when($request['description'], function($query) {
+                 $query->where('description', 'LIKE', '%' . $request['description'] . '%');
+                })->paginate(5);
 
+        //  if(isset($request['title'])){
+        //     $post->where('title', 'LIKE', '%'. $request['title'] .'%');
+        //  }
+        // // if(isset($request['description'])){
+        // //     $post->where(DB::raw('description'), 'LIKE', '%'. $request['description'] .'%');
+        // // }
+        //  $post->paginate(5);
+        //  \Log::info($post);
+         return $post;
+        // return $post;
+        // if($request->user()->type == 0){
+        //     return $post->orderBy('id', 'DESC')->paginate(5);
+        //     // return Post::when($request->search,function($query){
+        //     //     $query->where('title', 'LIKE', '%'.request('search').'%');
+        //     // })->orderBy('id', 'DESC')->paginate(5);
+        // }else{
+        //     // return Post::where('user_id',"=",$request->user()->id)->when($request->search,function($query){
+        //     //     $query->where('title', 'LIKE', '%'.request('search').'%');
+        //     // })->orderBy('id', 'DESC')->paginate(5);
+        //     return $post->where('user_id',"=",$request->user()->id)->orderBy('id', 'DESC')->paginate(5);
+        // }
+
+    }
 
     //create
     public function store(Request $request)
     {
         $input = $request->all();
         $validator = Validator::make($input, [
-        'title' => 'required',
+        'title' => 'required|max:50|unique:posts',
         'description' => 'required',
         'user_id' => 'required'
         ]);
@@ -74,11 +95,12 @@ class PostController extends Controller
 
 
     //update
-    public function update(Request $request, Post $post)
+    public function update(Request $request,Post $post)
     {
         $input = $request->all();
         $validator = Validator::make($input, [
-        'title' => 'required',
+        //'title' => 'required|unique:posts,title,'.$post->id,
+         'title' => [Rule::unique("posts","title")->ignore($post->id)],
         'description' => 'required',
         'user_id' => 'required'
         ]);
@@ -125,7 +147,7 @@ class PostController extends Controller
     }
 
     //import
-    public function import(Request $request)
+    public function import(Request $request,User $user)
     {
 
         $input = $request->only(['file']);
@@ -143,18 +165,20 @@ class PostController extends Controller
                 'errors' => $validator->errors()
             ],400);
         }
-        Excel::import(new PostsImport, $request->file('file'));
+        Excel::import(new PostsImport($request->user()->id), $request->file('file'));
         return response()->json([
         'result' => 1,
         'message' => 'Import successfully'
        ],200);
 
+
+
     }
 
     //export
-    public function export()
+    public function export($id)
     {
-        return Excel::download(new PostsExport, 'posts.xlsx');
+        return Excel::download(new PostsExport($id),'posts.xlsx');
     }
 
 }

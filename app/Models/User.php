@@ -26,10 +26,7 @@ class User extends Authenticatable
         'phone',
         'address',
         'dob',
-        'create_user_id',
-        'updated_user_id',
-        'deleted_user_id',
-        'deleted_id'
+
     ];
 
     /**
@@ -49,6 +46,7 @@ class User extends Authenticatable
      */
     protected $casts = [
         'email_verified_at' => 'datetime',
+        'dob' => 'datetime:Y/m/d'
     ];
 
     public function sendPasswordResetNotification($token)
@@ -57,5 +55,8 @@ class User extends Authenticatable
         \App\Notifications\MailResetPasswordNotification($token));
     }
 
+    // public function getTypeAttribute($value){
 
+    //     return $value == 0 ? "Admin" : "User";
+    // }
 }
