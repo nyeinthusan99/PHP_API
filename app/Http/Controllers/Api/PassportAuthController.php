@@ -34,7 +34,7 @@ class PassportAuthController extends Controller
                 'success' => false,
                 'message' => 'Validation Error!',
                 'errors' => $validator->errors()
-            ],400);
+            ],422);
         }
         if($request->hasFile('image')){
             $file = $request->file('image');
@@ -80,7 +80,7 @@ class PassportAuthController extends Controller
                 'success' => false,
                 'message' => 'Wrong',
                 'errors' => $validator->errors()
-            ],400);
+            ],422);
         }
 
         if (auth()->attempt($input)) {
@@ -135,7 +135,7 @@ class PassportAuthController extends Controller
                 'success' => false,
                 'message' => 'Wrong',
                 'errors' => $validator->errors()
-            ],401);
+            ],422);
         }
         $user = User::find($id);
         if($request->hasFile('image')){
@@ -178,32 +178,15 @@ class PassportAuthController extends Controller
 
     public function userLists(Request $request)
     {
-            $user = User::all();
-            // if($request->name){
-            //     $user->where('name','LIKE','%'.$request->name.'%');
-            // }
-            // if($request->email){
-            //     $user->where('email','LIKE','%'.$request->email.'%');
-            // }
-            // if($request->$user->type){
-            //     $user->where('type',$request->$user->type);
-            // }
-            // return $user->orderBy('id','DESC')->paginate(3);
-            return $user;
-            // return User::when(request('search'),function($query){
-            //     $query->where('name', 'LIKE', '%'.request('search').'%')->orwhere('email', 'LIKE', '%'.request('search').'%')->orwhere('type',$request->search);
-            // })->orderBy('id', 'DESC')->paginate(3);
+        $user = User::where('name','LIKE','%'.request('name').'%');
+        if(isset($request->email)){
+            $user = User::where('email','LIKE','%'.request('email').'%');
+        }
+        if(isset($request->type)){
+            $user = User::where('type',request('type'));
+        }
+        return $user->orderBy('id','DESC')->paginate(3);
     }
-    // public function emailSearch(Request $request)
-    // {
-    //         return User::when(request('search'),function($query){
-    //             $query->where('email', 'LIKE', '%'.request('search').'%');
-    //         })->orderBy('id', 'DESC')->paginate(3);
-    // }
-    // public function typeSearch(Request $request)
-    // {
-    //     return User::where('type',$request->search)->orderBy('id','DESC')->paginate(3);
-    // }
 
     public function store(Request $request)
     {
@@ -220,7 +203,7 @@ class PassportAuthController extends Controller
                 'success' => false,
                 'message' => 'Validation Error!',
                 'errors' => $validator->errors()
-            ],400);
+            ],422);
         }
 
         if($request->hasFile('image')){

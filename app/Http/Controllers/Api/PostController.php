@@ -18,34 +18,12 @@ class PostController extends Controller
     //to get post list & search
     public function index(Request $request)
     {
-        \Log::info($request);
-         $post = Post::where('title', 'LIKE', '%'. $request['title'] .'%')
+         return Post::where('title', 'LIKE', '%'. request('title') .'%')
                 ->when($request['description'], function($query) {
-                 $query->where('description', 'LIKE', '%' . $request['description'] . '%');
-                })->paginate(5);
-
-        //  if(isset($request['title'])){
-        //     $post->where('title', 'LIKE', '%'. $request['title'] .'%');
-        //  }
-        // // if(isset($request['description'])){
-        // //     $post->where(DB::raw('description'), 'LIKE', '%'. $request['description'] .'%');
-        // // }
-        //  $post->paginate(5);
-        //  \Log::info($post);
-         return $post;
-        // return $post;
-        // if($request->user()->type == 0){
-        //     return $post->orderBy('id', 'DESC')->paginate(5);
-        //     // return Post::when($request->search,function($query){
-        //     //     $query->where('title', 'LIKE', '%'.request('search').'%');
-        //     // })->orderBy('id', 'DESC')->paginate(5);
-        // }else{
-        //     // return Post::where('user_id',"=",$request->user()->id)->when($request->search,function($query){
-        //     //     $query->where('title', 'LIKE', '%'.request('search').'%');
-        //     // })->orderBy('id', 'DESC')->paginate(5);
-        //     return $post->where('user_id',"=",$request->user()->id)->orderBy('id', 'DESC')->paginate(5);
-        // }
-
+                 $query->where('description', 'LIKE', '%' . request('description') . '%');
+                })->when(request()->user()->type!=0,function($query){
+                    $query->where('user_id',request()->user()->id);
+                })->orderBy('id','DESC')->paginate(5)->withQueryString();
     }
 
     //create
@@ -62,7 +40,7 @@ class PostController extends Controller
                 'success' => false,
                 'message' => 'Wrong',
                 'errors' => $validator->errors()
-            ],400);
+            ],422);
         }
         $post = Post::create([
             'title' => $input['title'],
@@ -84,13 +62,13 @@ class PostController extends Controller
         return response()->json([
             "success" => false,
             "message" => "Product not found."
-            ]);
+            ],422);
         }
         return response()->json([
         "success" => true,
         "message" => "Post retrieved successfully.",
         "data" => $post
-        ]);
+        ],200);
     }
 
 
@@ -99,8 +77,7 @@ class PostController extends Controller
     {
         $input = $request->all();
         $validator = Validator::make($input, [
-        //'title' => 'required|unique:posts,title,'.$post->id,
-         'title' => [Rule::unique("posts","title")->ignore($post->id)],
+        'title' => [Rule::unique("posts","title")->ignore($post->id)],
         'description' => 'required',
         'user_id' => 'required'
         ]);
@@ -109,7 +86,7 @@ class PostController extends Controller
                 'success' => false,
                 'message' => 'Wrong',
                 'errors' => $validator->errors()
-            ],401);
+            ],422);
         }
         $post->title = $input['title'];
         $post->description = $input['description'];
@@ -134,17 +111,6 @@ class PostController extends Controller
         ]);
     }
 
-    public function search($title)
-    {
-        $result = Post::where('title', 'LIKE', '%'. $title. '%')->get();
-        if(count($result)){
-         return Response()->json($result);
-        }
-        else
-        {
-        return response()->json(['Result' => 'No Data not found'], 404);
-      }
-    }
 
     //import
     public function import(Request $request,User $user)
@@ -163,7 +129,7 @@ class PostController extends Controller
                 'success' => false,
                 'message' => 'Validation Error!',
                 'errors' => $validator->errors()
-            ],400);
+            ],422);
         }
         Excel::import(new PostsImport($request->user()->id), $request->file('file'));
         return response()->json([

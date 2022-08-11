@@ -4,7 +4,6 @@ namespace App\Http\Controllers\api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Hash;
@@ -14,7 +13,6 @@ class ForgetPasswordController extends Controller
 {
     protected function sendResetLinkResponse(Request $request)
         {
-
             //send link to mail
             $input = $request->only('email');
 
@@ -44,3 +42,4 @@ class ForgetPasswordController extends Controller
             return response($response, 200);
         }
 }
+

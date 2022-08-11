@@ -46,19 +46,6 @@ class UsersController extends Controller
         return Excel::download(new UsersExport, 'users.xlsx');
     }
 
-
-    public function searchUser($name)
-    {
-        $result = User::where('name', 'LIKE', '%'. $name. '%')->get();
-        if(count($result)){
-         return Response()->json($result);
-        }
-        else
-        {
-        return response()->json(['Result' => 'No Data not found'], 404);
-      }
-    }
-
 }
 
 
