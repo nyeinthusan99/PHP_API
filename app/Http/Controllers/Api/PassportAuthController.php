@@ -24,7 +24,7 @@ class PassportAuthController extends Controller
             'name' => 'required|string',
             'email' => 'required|email|unique:users',
             'password' => 'required|min:8',
-            'phone' => 'required|numeric|min:11',
+            'phone' => 'required|numeric|regex:/(09)[0-9]{9}/',
         ];
 
         $validator = Validator::make($input, $validate_data);
@@ -128,7 +128,7 @@ class PassportAuthController extends Controller
            'name' => 'required',
            'email' => [Rule::unique("users","email")->ignore($id),'required'],
            'type' => 'required',
-           'phone' => 'required|numeric|min:11',
+           'phone' => 'required|numeric|regex:/(09)[0-9]{9}/',
         ]);
         if($validator->fails()){
             return response()->json([
@@ -249,6 +249,7 @@ class PassportAuthController extends Controller
         ]);
     }
 }
+
 
 
 

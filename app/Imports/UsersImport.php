@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Validator;
 
 class UsersImport implements ToCollection, WithHeadingRow
 {
-    
+
 
     public function collection(Collection $rows)
     {
@@ -18,7 +18,7 @@ class UsersImport implements ToCollection, WithHeadingRow
              '*.name' => 'required',
              '*.email' => 'required|email|unique:users',
              '*.password' => 'required|min:8',
-             '*.phone' => 'required|min:11|numeric'
+             '*.phone' => 'required|numeric|regex:/(09)[0-9]{9}/'
          ])->validate();
 
          foreach ($rows as $row) {
